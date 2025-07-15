@@ -1,0 +1,28 @@
+{% extends 'encheres/accueil.html' %}
+
+{% block title %}Voitures disponibles{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Voitures disponibles</h1>
+    <div class="row">
+        {% for voiture in voitures %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    {% if voiture.image %}
+                        <img src="{{ voiture.image.url }}" class="card-img-top" alt="Image de {{ voiture.marque }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ voiture.marque }} {{ voiture.modele }}</h5>
+                        <p class="card-text">{{ voiture.description|truncatewords:15 }}</p>
+                        <p><strong>Année :</strong> {{ voiture.annee }}</p>
+                        <p><strong>Prix de départ :</strong> {{ voiture.prix_depart }} €</p>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p>Aucune voiture disponible pour le moment.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

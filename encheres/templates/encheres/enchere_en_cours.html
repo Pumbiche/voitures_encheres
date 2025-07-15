@@ -1,0 +1,173 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Enchère en cours</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .enchere-card {
+            max-width: 700px;
+            margin: auto;
+            margin-top: 50px;
+        }
+        .countdown {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container enchere-card">
+
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mt-2">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if enchere %}
+        <div class="card shadow">
+            <img src="{{ enchere.voiture.image.url }}" class="card-img-top" alt="Voiture" style="object-fit: cover; height: 300px;">
+            <div class="card-body">
+                <h3 class="card-title">{{ enchere.voiture }}</h3>
+                <p class="card-text">Description : {{ enchere.voiture.description }}</p>
+                <p class="card-text">Prix actuel : <span id="prix-actuel" class="fw-bold">{{ enchere.prix_actuel }} €</span></p>
+                <p class="card-text">Fin de l'enchère dans : <span id="countdown" class="countdown"></span></p>
+
+                <form method="post" class="mt-4" id="offre-form">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    <div class="mb-3">
+                        {{ form.offre.label_tag }}
+                        {{ form.offre }}
+                        {% if form.offre.errors %}
+                            <div class="text-danger">{{ form.offre.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" {% if temps_restant == 0 %}disabled{% endif %}>Placer une enchère</button>
+                </form>
+
+                <div id="message" class="mt-3"></div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center mt-5">
+            <h4>Aucune enchère en cours pour le moment.</h4>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+const prixActuelElem = document.getElementById('prix-actuel');
+const countdownElem = document.getElementById('countdown');
+const form = document.getElementById('offre-form');
+const messageDiv = document.getElementById('message');
+
+function updateEnchere() {
+    fetch('/encheres/api/enchere_status/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.prix_actuel !== null) {
+                const prix = parseFloat(data.prix_actuel);
+                prixActuelElem.textContent = prix.toFixed(2) + ' €';
+                const offreInput = document.getElementById('{{ form.offre.id_for_label }}');
+                if (offreInput) {
+                    offreInput.min = (prix + 0.01).toFixed(2);
+                }
+            }
+
+            if (data.temps_restant > 0) {
+                const minutes = Math.floor(data.temps_restant / 60);
+                const seconds = data.temps_restant % 60;
+                countdownElem.textContent = `${minutes}m ${seconds}s`;
+                form.querySelector('button[type="submit"]').disabled = false;
+                const offreInput = document.getElementById('{{ form.offre.id_for_label }}');
+                if (offreInput) {
+                    offreInput.disabled = false;
+                }
+            } else {
+                countdownElem.textContent = "Terminé";
+                form.querySelector('button[type="submit"]').disabled = true;
+                const offreInput = document.getElementById('{{ form.offre.id_for_label }}');
+                if (offreInput) {
+                    offreInput.disabled = true;
+                }
+
+                messageDiv.innerHTML = `
+                    <div class="alert alert-warning mt-3">
+                        L'enchère est terminée. Veuillez actualiser la page pour voir les résultats.
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération du statut de l\'enchère:', error);
+        });
+}
+
+setInterval(updateEnchere, 1000);
+updateEnchere();
+
+form.addEventListener('submit', function(event) {
+    event.preventDefault();
+    messageDiv.textContent = '';
+
+    const offreInput = document.getElementById('{{ form.offre.id_for_label }}');
+    const offreValeur = offreInput.value;
+
+    fetch(window.location.pathname, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrftoken,
+        },
+        body: new URLSearchParams({
+            'offre': offreValeur
+        })
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+            return null;
+        }
+        return response.text();
+    })
+    .then(data => {
+        if (data !== null) {
+            messageDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de la soumission de l\'offre. Veuillez vérifier votre saisie.</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de la soumission:', error);
+        messageDiv.innerHTML = '<div class="alert alert-danger">Erreur réseau.</div>';
+    });
+});
+</script>
+
+</body>
+</html>
+
