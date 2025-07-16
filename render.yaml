@@ -3,11 +3,17 @@ services:
     name: django-app
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn monprojet.wsgi:application"
+    startCommand: "gunicorn config.wsgi:application"  # remplace monprojet si besoin
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.settings
+        value: config.settings  # remplace par ton vrai module settings
       - key: SECRET_KEY
-        generateValue: true
+        value: django-insecure-7!v3^z#y2p4@*m&u0e$1w8bq+g5r9jh%klsdf0zxcvbnm
       - key: DEBUG
         value: "False"
+      - key: DATABASE_URL
+        value: postgresql://voitures_encheres_db_user:jOhpp85RMCzgS1uH6ivx5hU2tcS8FzvR@dpg-d1rin8be5dus73dotvfg-a.frankfurt-postgres.render.com:5432/voitures_encheres_db
+      - key: EMAIL_HOST_USER
+        value: concessoenchere@gmail.com
+      - key: EMAIL_HOST_PASSWORD
+        value: skwj buso mitv rwyx

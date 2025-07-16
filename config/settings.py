@@ -84,21 +84,25 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
-from decouple import config
-import dj_database_url
-
-ENV = config('ENV', default='local')
-
-DATABASES = {}
-
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///db.sqlite3',
+        conn_max_age=600,
+        ssl_require=not DEBUG  # SSL activé en prod, désactivé en dev
+    )
 }
 
+SECRET_KEY = config("SECRET_KEY")
+DEBUG = config("DEBUG", cast=bool)
+
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+
+DATABASES = {
+    "default": dj_database_url.config(default=config("DATABASE_URL"))
+}
 
 
 # Authentication redirects
@@ -216,7 +220,3 @@ SECURE_REFERRER_POLICY = 'same-origin'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-print("DEBUG env var:", config('DEBUG'))
-print("SECRET_KEY env var:", config('SECRET_KEY'))
