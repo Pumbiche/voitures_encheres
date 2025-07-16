@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
+import dj_database_url
 
 # Base directory of the project
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -83,17 +84,21 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
-# Database configuration (PostgreSQL)
+from decouple import config
+import dj_database_url
+
+ENV = config('ENV', default='local')
+
+DATABASES = {}
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'encheresdb',
-        'USER': 'encheresuser',
-        'PASSWORD': config('DB_PASSWORD', default='Jefais1test+'),
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 
 
 # Authentication redirects
@@ -125,7 +130,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Media files (user uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
 
 # Email configuration (Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -212,3 +216,7 @@ SECURE_REFERRER_POLICY = 'same-origin'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+print("DEBUG env var:", config('DEBUG'))
+print("SECRET_KEY env var:", config('SECRET_KEY'))
