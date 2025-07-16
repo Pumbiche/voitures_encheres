@@ -30,8 +30,18 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 # Hosts allowed to serve the app
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
-import sys
-print("ALLOWED_HOSTS in settings.py:", ALLOWED_HOSTS, file=sys.stderr)
+# myproject/middleware.py
+import logging
+logger = logging.getLogger(__name__)
+
+class LogAllowedHostsMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        logger.warning(f"ALLOWED_HOSTS: {__import__('django.conf').conf.settings.ALLOWED_HOSTS}")
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return response
 
 # Application definition
 
@@ -49,6 +59,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'myproject.middleware.LogAllowedHostsMiddleware',
     'django.middleware.security.SecurityMiddleware',  # Important for HTTPS + security headers
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
