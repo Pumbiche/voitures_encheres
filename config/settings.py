@@ -15,6 +15,8 @@ from decouple import config
 import os
 import dj_database_url
 
+import os
+print("ALLOWED_HOSTS env:", os.getenv('ALLOWED_HOSTS'))
 # Base directory of the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,6 +29,8 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Hosts allowed to serve the app
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+
+print("ALLOWED_HOSTS from env:", ALLOWED_HOSTS)
 
 # Application definition
 
