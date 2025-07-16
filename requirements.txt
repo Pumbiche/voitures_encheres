@@ -14,3 +14,4 @@ scipy==1.15.3
 sounddevice==0.5.1
 sqlparse==0.5.3
 tzdata==2025.2
+whitenoise
