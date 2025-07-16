@@ -15,11 +15,6 @@ from decouple import config
 import os
 import dj_database_url
 
-import os
-print("ALLOWED_HOSTS env:", os.getenv('ALLOWED_HOSTS'))
-# Base directory of the project
-BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
@@ -44,7 +39,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'myproject.middleware.LogAllowedHostsMiddleware',
     'django.middleware.security.SecurityMiddleware',  # Important for HTTPS + security headers
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
