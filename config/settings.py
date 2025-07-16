@@ -27,8 +27,10 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-# Hosts allowed to serve the app
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+import os
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+print("ALLOWED_HOSTS:", ALLOWED_HOSTS)  # Pour debug local, à supprimer ensuite
 
 # myproject/middleware.py
 import logging
