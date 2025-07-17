@@ -17,11 +17,7 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['voitures-encheres.onrender.com', 'localhost', '127.0.0.1']
 # Application definition
@@ -37,6 +33,9 @@ INSTALLED_APPS = [
 
     # Your app
     'encheres',
+    
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -75,25 +74,18 @@ CSRF_TRUSTED_ORIGINS = [
     'https://bac2b0444f9a.ngrok-free.app',
 ]
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = config('DEBUG', default=False, cast=bool)
+print("⚙️ DEBUG =", DEBUG)
 
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
-
-DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///db.sqlite3',
-        conn_max_age=600,
-        ssl_require=not DEBUG  # SSL activé en prod, désactivé en dev
-    )
-}
 
 SECRET_KEY = config("SECRET_KEY")
-DEBUG = config("DEBUG", cast=bool)
 
 EMAIL_HOST_USER = config("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 
 DATABASES = {
-    "default": dj_database_url.config(default=config("DATABASE_URL"))
+    "default": dj_database_url.config(default=config("DATABASE_URL"), conn_max_age=600, ssl_require=not DEBUG)
 }
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
@@ -181,6 +173,14 @@ LOGGING = {
 
 # Security Settings
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://voitures-encheres.onrender.com',
+]
+
+
+
 # Redirect all HTTP requests to HTTPS
 SECURE_SSL_REDIRECT = True
 
@@ -207,9 +207,23 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'same-origin'
 
+if DEBUG:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0    
+
 # If your app is behind a proxy/load balancer that handles SSL termination:
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
+}
