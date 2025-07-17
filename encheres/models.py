@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
+from cloudinary.models import CloudinaryField
 
 class Voiture(models.Model):
     marque = models.CharField(max_length=100)
