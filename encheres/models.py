@@ -9,7 +9,7 @@ class Voiture(models.Model):
     annee = models.PositiveIntegerField()
     prix_depart = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='voitures/', blank=True, null=True)
+    image = image = CloudinaryField('image')
     date_pub = models.DateTimeField(auto_now_add=True)
     vendeur = models.ForeignKey(User, on_delete=models.CASCADE)
 
