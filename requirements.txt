@@ -16,3 +16,4 @@ sqlparse==0.5.3
 tzdata==2025.2
 whitenoise
 cloudinary
+cloudinary_storage
