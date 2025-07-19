@@ -23,13 +23,15 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # On inclut toutes les URLs de l'app "encheres" sous le prefix 'encheres/'
     path('', include('encheres.urls')),
-    path('enchere/terminee/', views.enchere_terminee, name='enchere_terminee'),
+
+    # Routes spécifiques hors de l'app "encheres"
     path('login/', auth_views.LoginView.as_view(template_name='encheres/login.html'), name='login'),
     path('register/', views.register, name='register'),
     path('logout/', views.logout_view, name='logout'),
-    ]
-# ⬅️ on relie les URLs de l'app enchere
+]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,19 +1,26 @@
-from datetime import timedelta
+from datetime import timedelta  # OK si tu manipules des durées
 
-from django.contrib import messages
-from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
-from django.http import JsonResponse
-from django.shortcuts import render, redirect
-from django.utils import timezone
-import logging
-from .forms import RegisterForm, OffreForm
-from .models import Voiture, Enchere
-from django.db import transaction
-from decimal import Decimal
-from django_ratelimit.decorators import ratelimit
-from django.views.decorators.http import require_POST
+from django.contrib import messages  # Pour afficher des messages flash, OK
+from django.contrib.auth import login, logout  # Pour gérer les sessions utilisateurs, OK
+from django.contrib.auth.decorators import login_required  # Pour protéger les vues, OK
+from django.core.mail import send_mail  # Si tu envoies des mails, OK
+from django.http import JsonResponse  # Pour renvoyer du JSON, OK
+from django.shortcuts import render, redirect  # Pour les vues, OK
+from django.utils import timezone  # Pour gérer la date/heure, OK
+import logging  # Pour logger, OK
+
+from .forms import RegisterForm, OffreForm  # Tes formulaires locaux, OK
+from .models import Voiture, Enchere  # Tes modèles locaux, OK
+
+from django.db import transaction  # Pour les transactions atomiques, OK
+from decimal import Decimal  # Pour manipuler les nombres décimaux précis, OK
+
+from django_ratelimit.decorators import ratelimit  # Si tu utilises la limitation de requêtes, OK
+from django.views.decorators.http import require_POST  # Pour restreindre les méthodes HTTP, OK
+from django.views.decorators.csrf import csrf_protect
+
+from .models import Offre
+
 
 
 def accueil(request):
@@ -162,16 +169,23 @@ def enchere_status(request):
         }
     return JsonResponse(data)
 
-
+@csrf_protect
 @require_POST
 @login_required
 def soumettre_offre(request):
-    try:
-        enchere = Enchere.objects.get(en_cours=True)
-    except Enchere.DoesNotExist:
+    now = timezone.now()
+    enchere_active = None
+
+    for enchere in Enchere.objects.all():
+        if enchere.est_active():
+            enchere_active = enchere
+            break
+
+    if not enchere_active:
         return JsonResponse({'success': False, 'error': "Aucune enchère active."})
 
-    if enchere.date_fin < timezone.now():
+    # Ensuite, tu peux continuer avec enchere_active au lieu de enchere
+    if enchere_active.date_fin < now:
         return JsonResponse({'success': False, 'error': "L'enchère est terminée."})
 
     try:
@@ -179,19 +193,17 @@ def soumettre_offre(request):
     except ValueError:
         return JsonResponse({'success': False, 'error': "Montant invalide."})
 
-    # Vérifie que l'offre est supérieure au prix actuel + 0.01€
-    minimum_requis = enchere.prix_actuel + 0.01
-    if offre < minimum_requis:
+    minimum_requis = enchere.prix_actuel + Decimal('0.01')
+    if Decimal(str(offre)) < minimum_requis:
         return JsonResponse({
             'success': False,
             'error': f"L'offre doit être supérieure à {minimum_requis:.2f} €"
-        })
+    })
 
-    # Enregistre l'offre
-    Offre.objects.create(utilisateur=request.user, enchere=enchere, montant=offre)
+    Offre.objects.create(utilisateur=request.user, enchere=enchere_active, montant=offre)
 
-    # Met à jour le prix actuel de l'enchère
-    enchere.prix_actuel = offre
-    enchere.save()
+    enchere_active.prix_actuel = offre
+    enchere_active.save()
 
     return JsonResponse({'success': True, 'nouveau_prix': offre})
+

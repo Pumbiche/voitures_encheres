@@ -84,7 +84,7 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-const csrftoken = getCookie('csrftoken');
+const cssrftoken = getCookie('csrftoken');
 
 const prixActuelElem = document.getElementById('prix-actuel');
 const countdownElem = document.getElementById('countdown');
@@ -95,15 +95,7 @@ function updateEnchere() {
     fetch('/encheres/api/enchere_status/')
         .then(response => response.json())
         .then(data => {
-            if (data.prix_actuel !== null) {
-                const prix = parseFloat(data.prix_actuel);
-                prixActuelElem.textContent = prix.toFixed(2) + ' €';
-                const offreInput = document.getElementById('{{ form.offre.id_for_label }}');
-                if (offreInput) {
-                    offreInput.min = (prix + 0.01).toFixed(2);
-                }
-            }
-
+            
             if (data.temps_restant > 0) {
                 const minutes = Math.floor(data.temps_restant / 60);
                 const seconds = data.temps_restant % 60;
@@ -136,14 +128,16 @@ function updateEnchere() {
 setInterval(updateEnchere, 1000);
 updateEnchere();
 
+
 form.addEventListener('submit', function(event) {
     event.preventDefault();
     messageDiv.textContent = '';
 
     const offreInput = document.getElementById('{{ form.offre.id_for_label }}');
     const offreValeur = offreInput.value;
-
-    fetch(window.location.pathname, {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch('/soumettre_offre/', {  // <-- URL vers ta vue AJAX
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -153,16 +147,14 @@ form.addEventListener('submit', function(event) {
             'offre': offreValeur
         })
     })
-    .then(response => {
-        if (response.redirected) {
-            window.location.href = response.url;
-            return null;
-        }
-        return response.text();
-    })
+    .then(response => response.json())  // Parse la réponse JSON
     .then(data => {
-        if (data !== null) {
-            messageDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de la soumission de l\'offre. Veuillez vérifier votre saisie.</div>';
+        if (data.success) {
+            messageDiv.innerHTML = '<div class="alert alert-success">Offre enregistrée !</div>';
+            // Mise à jour du prix affiché
+            prixActuelElem.textContent = parseFloat(data.nouveau_prix).toFixed(2) + ' €';
+        } else {
+            messageDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
         }
     })
     .catch(error => {
